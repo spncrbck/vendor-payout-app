@@ -402,7 +402,7 @@ function processOrder(order) {
   var hasAlp = all.indexOf(ALPENGLOW_VENDOR) !== -1;
   var third = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; });
   var isMixed = (hasAlp && third.length > 0) || third.length > 1;
-  var paymentGateway = order.payment_gateway || "";
+  var paymentGateway = (order.payment_gateway_names && order.payment_gateway_names[0]) || order.payment_gateway || "";
   var isCashOrder = NO_FEE_GATEWAYS.indexOf(paymentGateway) !== -1;
   var effectiveRate = isCashOrder ? 0 : FEE_RATE;
   var effectiveFlat = isCashOrder ? 0 : FEE_FLAT;
