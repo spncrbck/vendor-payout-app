@@ -84,7 +84,8 @@
   <div id="tab-report">
     <div class="card">
       <div class="controls">
-        <div><label>Month</label><select id="monthSelect"></select></div>
+        <div><label>From</label><input type="date" id="dateFrom" /></div>
+        <div><label>To</label><input type="date" id="dateTo" /></div>
         <div><label>Vendor</label><select id="vendorFilter"><option value="all">All vendors</option></select></div>
         <button class="btn-primary" id="generateBtn" onclick="generateReport()">Generate report</button>
       </div>
@@ -148,24 +149,21 @@ var NO_FEE_GATEWAYS = ["cash", "gift_card", "manual", "exchange_credit", "store_
 var vendorSettings = {};
 
 window.addEventListener("DOMContentLoaded", function() {
-  populateMonths();
+  initDateRange();
   loadVendorSettings();
   renderVendorSettings();
 });
 
-function populateMonths() {
-  var sel = document.getElementById("monthSelect");
+function initDateRange() {
   var now = new Date();
-  for (var i = 0; i < 13; i++) {
-    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    var val = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
-    var label = d.toLocaleString("default", { month: "long", year: "numeric" });
-    var opt = document.createElement("option");
-    opt.value = val;
-    opt.textContent = label;
-    if (i === 1) opt.selected = true;
-    sel.appendChild(opt);
-  }
+  var firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  var lastOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  document.getElementById("dateFrom").value = isoDate(firstOfLastMonth);
+  document.getElementById("dateTo").value = isoDate(lastOfLastMonth);
+}
+
+function isoDate(d) {
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
 }
 
 function showTab(tab) {
@@ -291,16 +289,17 @@ function quickAddVendor(name) {
 
 function generateReport() {
   var btn = document.getElementById("generateBtn");
-  var parts = document.getElementById("monthSelect").value.split("-");
-  var year = parts[0];
-  var month = parseInt(parts[1]);
+  var dateFrom = document.getElementById("dateFrom").value;
+  var dateTo = document.getElementById("dateTo").value;
+  if (!dateFrom || !dateTo) { showError("Please select a From and To date."); return; }
+  if (dateFrom > dateTo) { showError("From date must be before To date."); return; }
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>Loading...';
   showError(null);
   document.getElementById("metricsBar").style.display = "none";
   document.getElementById("vendorCards").innerHTML = "";
 
-  apiFetch("/orders?year=" + year + "&month=" + month).then(function(data) {
+  apiFetch("/orders?start_date=" + dateFrom + "&end_date=" + dateTo).then(function(data) {
     renderReport(data);
   }).catch(function(e) {
     showError(e.message);
@@ -468,7 +467,9 @@ function downloadCSV(vendor, processed) {
   var csv = rows.map(function(r) { return r.join(","); }).join("\n");
   var a = document.createElement("a");
   a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-  a.download = "payout_" + vendor.replace(/\s+/g,"_") + "_" + document.getElementById("monthSelect").value + ".csv";
+  var dateFrom = document.getElementById("dateFrom").value;
+  var dateTo = document.getElementById("dateTo").value;
+  a.download = "payout_" + vendor.replace(/\s+/g,"_") + "_" + dateFrom + "_to_" + dateTo + ".csv";
   a.click();
 }
 
