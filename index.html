@@ -413,9 +413,9 @@ function processOrder(order) {
     var taxShare = r2(tax * share);
     var discountShare = r2(totalDiscount * share);
     var flat = isMixed ? effectiveFlat / all.length : effectiveFlat;
-    var pct = effectiveRate * (s + taxShare);
+    var pct = effectiveRate * (s - discountShare + taxShare);
     var fee = r2(flat + pct);
-    var gross = r2(s + taxShare - fee - discountShare);
+    var gross = r2(s + taxShare - discountShare - fee);
     var rate = vendorSettings[v] ? vendorSettings[v].consignmentRate : 1;
     vendorData[v] = {
       sub: r2(s), taxShare: taxShare, discountShare: discountShare,
