@@ -433,7 +433,25 @@ window.addEventListener("DOMContentLoaded", function() {
   initDateRange();
   loadVendorSettings();
   renderVendorSettings();
+  loadVendorDropdown();
 });
+
+function loadVendorDropdown() {
+  apiFetch("/vendors").then(function(data) {
+    var filter = document.getElementById("vendorFilter");
+    var cur = filter.value;
+    filter.innerHTML = '<option value="all">All vendors</option>';
+    (data.vendors || []).forEach(function(v) {
+      var o = document.createElement("option");
+      o.value = v; o.textContent = v;
+      if (v === cur) o.selected = true;
+      filter.appendChild(o);
+    });
+  }).catch(function() {
+    // silently fall back to settings-based list
+    renderVendorSettings();
+  });
+}
 
 function initDateRange() {
   var now = new Date();
@@ -486,16 +504,6 @@ function renderVendorSettings() {
     html += '</div>';
   });
   list.innerHTML = html;
-
-  var filter = document.getElementById("vendorFilter");
-  var cur = filter.value;
-  filter.innerHTML = '<option value="all">All vendors</option>';
-  entries.forEach(function(entry) {
-    var o = document.createElement("option");
-    o.value = entry[0]; o.textContent = entry[0];
-    if (entry[0] === cur) o.selected = true;
-    filter.appendChild(o);
-  });
 }
 
 function updateVendorRate(name, val) {
