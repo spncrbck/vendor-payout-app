@@ -49,7 +49,6 @@
     .badge-solo { background: #d1fae5; color: #065f46; }
     .badge-cash { background: #d1fae5; color: #065f46; }
     .badge-card { background: #e0e7ff; color: #3730a3; }
-    .toggle-link { font-size: 0.8rem; color: #008060; background: none; border: none; cursor: pointer; text-decoration: underline; padding: 0; }
     .settings-row { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; flex-wrap: wrap; }
     .settings-row:last-child { border-bottom: none; }
     .settings-name { font-weight: 500; font-size: 0.9rem; min-width: 180px; }
@@ -349,7 +348,8 @@ function renderReport(data) {
         '<td><span class="badge ' + gwBadge + '">' + gwLabel + '</span></td>' +
         '<td>' + fmt(d.sub) + '</td>' +
         '<td>' + fmt(d.taxShare) + '</td>' +
-        '<td style="color:#dc2626">-' + fmt(d.totalFeeShare) + '</td>' +
+        '<td style="color:#dc2626">' + (d.totalFeeShare > 0 ? '-' + fmt(d.totalFeeShare) : '$0.00') + '</td>' +
+        '<td style="color:#dc2626">' + (d.discountShare > 0 ? '-' + fmt(d.discountShare) : '$0.00') + '</td>' +
         '<td style="font-weight:600;color:#008060">' + fmt(d.netPayout) + '</td>' +
         '</tr>';
     });
@@ -365,20 +365,20 @@ function renderReport(data) {
       '<div class="vendor-meta">' + Math.round((v.consignmentRate||1)*100) + '% rate &middot; ' + v.orderCount + ' order' + (v.orderCount!==1?'s':'') + '</div></div>' +
       '<div class="vendor-actions">' +
       '<button class="btn-secondary" style="font-size:0.8rem;padding:0.3rem 0.75rem" onclick="downloadCSV(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">Download CSV</button>' +
-      '<button class="toggle-link" onclick="toggleOrders(\'' + ordersId + '\',this)">Show orders</button>' +
       '</div></div>' +
       '<div class="vendor-body">' +
       '<div class="payout-grid">' +
       '<div class="payout-cell"><div class="pl">Gross sales</div><div class="pv">' + fmt(v.grossSales) + '</div></div>' +
       '<div class="payout-cell"><div class="pl">Tax collected</div><div class="pv">' + fmt(v.taxCollected) + '</div></div>' +
-      '<div class="payout-cell"><div class="pl">Processing fees</div><div class="pv red">-' + fmt(v.processingFees) + '</div></div>' +
+      '<div class="payout-cell"><div class="pl">Processing fees</div><div class="pv red">' + (v.processingFees > 0 ? '-' + fmt(v.processingFees) : '$0.00') + '</div></div>' +
+      (v.totalDiscounts > 0 ? '<div class="payout-cell"><div class="pl">Discounts</div><div class="pv red">-' + fmt(v.totalDiscounts) + '</div></div>' : '') +
       commissionHtml +
       '<div class="payout-cell"><div class="pl">Net payout</div><div class="pv green">' + fmt(v.netPayout) + '</div></div>' +
       '</div>' +
-      '<div id="' + ordersId + '" style="display:none">' +
+      '<div id="' + ordersId + '">' +
       '<hr class="divider"/>' +
       '<div style="overflow-x:auto"><table>' +
-      '<thead><tr><th>Order</th><th>Date</th><th>Type</th><th>Payment</th><th>Subtotal</th><th>Tax</th><th>Fee</th><th>Net</th></tr></thead>' +
+      '<thead><tr><th>Order</th><th>Date</th><th>Type</th><th>Payment</th><th>Subtotal</th><th>Tax</th><th>Fee</th><th>Discount</th><th>Net</th></tr></thead>' +
       '<tbody>' + orderRows + '</tbody>' +
       '</table></div></div>' +
       '</div></div>';
@@ -387,12 +387,6 @@ function renderReport(data) {
   document.getElementById("vendorCards").innerHTML = cardsHtml;
 }
 
-function toggleOrders(id, btn) {
-  var el = document.getElementById(id);
-  var showing = el.style.display !== "none";
-  el.style.display = showing ? "none" : "";
-  btn.textContent = showing ? "Show orders" : "Hide orders";
-}
 
 function processOrder(order) {
   var lines = order.line_items || [];
@@ -403,6 +397,7 @@ function processOrder(order) {
   });
   var sub = Object.values(vs).reduce(function(s,v) { return s+v; }, 0);
   var tax = parseFloat(order.total_tax || 0);
+  var totalDiscount = parseFloat(order.total_discounts || 0);
   var all = Object.keys(vs);
   var hasAlp = all.indexOf(ALPENGLOW_VENDOR) !== -1;
   var third = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; });
@@ -415,15 +410,16 @@ function processOrder(order) {
   all.forEach(function(v) {
     var s = vs[v];
     var share = sub > 0 ? s / sub : 0;
-    var taxShare = tax * share;
+    var taxShare = r2(tax * share);
+    var discountShare = r2(totalDiscount * share);
     var flat = isMixed ? effectiveFlat / all.length : effectiveFlat;
     var pct = effectiveRate * (s + taxShare);
-    var fee = flat + pct;
-    var gross = s + taxShare - fee;
+    var fee = r2(flat + pct);
+    var gross = r2(s + taxShare - fee - discountShare);
     var rate = vendorSettings[v] ? vendorSettings[v].consignmentRate : 1;
     vendorData[v] = {
-      sub: r2(s), taxShare: r2(taxShare),
-      totalFeeShare: r2(fee), grossPayout: r2(gross),
+      sub: r2(s), taxShare: taxShare, discountShare: discountShare,
+      totalFeeShare: fee, grossPayout: gross,
       consignmentRate: rate,
       alpenglowCommission: r2(gross * (1 - rate)),
       netPayout: r2(gross * rate)
@@ -446,9 +442,10 @@ function buildSummaries(processed) {
     Object.entries(order.vendorData).forEach(function(entry) {
       var v = entry[0]; var d = entry[1];
       if (v === ALPENGLOW_VENDOR) return;
-      if (!s[v]) s[v] = { vendor:v, grossSales:0, taxCollected:0, processingFees:0, alpenglowCommission:0, netPayout:0, orderCount:0, consignmentRate:d.consignmentRate };
+      if (!s[v]) s[v] = { vendor:v, grossSales:0, taxCollected:0, totalDiscounts:0, processingFees:0, alpenglowCommission:0, netPayout:0, orderCount:0, consignmentRate:d.consignmentRate };
       s[v].grossSales = r2(s[v].grossSales + d.sub);
       s[v].taxCollected = r2(s[v].taxCollected + d.taxShare);
+      s[v].totalDiscounts = r2(s[v].totalDiscounts + d.discountShare);
       s[v].processingFees = r2(s[v].processingFees + d.totalFeeShare);
       s[v].alpenglowCommission = r2(s[v].alpenglowCommission + d.alpenglowCommission);
       s[v].netPayout = r2(s[v].netPayout + d.netPayout);
@@ -459,10 +456,10 @@ function buildSummaries(processed) {
 }
 
 function downloadCSV(vendor, processed) {
-  var rows = [["Order","Date","Type","Payment","Subtotal","Tax","Fee","Net Payout"]];
+  var rows = [["Order","Date","Type","Payment","Subtotal","Tax","Fee","Discount","Net Payout"]];
   processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
     var d = o.vendorData[vendor];
-    rows.push([o.orderId, o.date, o.isMixed?"mixed":"solo", o.paymentGateway||"", d.sub, d.taxShare, d.totalFeeShare, d.netPayout]);
+    rows.push([o.orderId, o.date, o.isMixed?"mixed":"solo", o.paymentGateway||"", d.sub, d.taxShare, d.totalFeeShare, d.discountShare, d.netPayout]);
   });
   var csv = rows.map(function(r) { return r.join(","); }).join("\n");
   var a = document.createElement("a");
