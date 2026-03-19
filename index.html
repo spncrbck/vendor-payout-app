@@ -266,6 +266,13 @@
           <label>Vendor</label>
           <select id="vendorFilter"><option value="all">All vendors</option></select>
         </div>
+        <div>
+          <label>Payment Method</label>
+          <select id="paymentMethod">
+            <option value="Check">Check</option>
+            <option value="Direct Deposit">Direct Deposit</option>
+          </select>
+        </div>
         <button class="btn-primary" id="generateBtn" onclick="generateReport()">Generate report</button>
       </div>
       <div class="date-presets">
@@ -669,12 +676,14 @@ function downloadPDF(vendor) {
     'table.data tr:last-child td{border-bottom:none}' +
     '.total-row td{font-weight:700;border-top:1.5px solid #000;padding-top:6px}' +
     '.notes{font-size:10.5px;line-height:1.6;margin:20px 0;color:#222}' +
-    '.sig-block{margin-top:40px}' +
-    '.sig-label{font-style:italic;font-size:11px;margin-bottom:16px}' +
-    '.sig-name{font-family:"Brush Script MT","Apple Chancery",cursive;font-size:32px;margin-bottom:2px}' +
-    '.sig-line{display:flex;align-items:flex-end;gap:40px;border-bottom:none}' +
-    '.sig-underline{border-bottom:1px solid #000;padding-bottom:2px;min-width:180px}' +
-    '.sig-date-line{border-bottom:1px solid #000;padding-bottom:2px;min-width:80px}' +
+    '.sig-block{margin-top:48px}' +
+    '.sig-label{font-style:italic;font-size:11px;margin-bottom:28px}' +
+    '.sig-row{display:flex;gap:40px;align-items:flex-end;margin-bottom:4px}' +
+    '.sig-underline{border-bottom:1px solid #000;width:220px}' +
+    '.sig-date-underline{border-bottom:1px solid #000;width:100px;text-align:left;font-size:11px;padding-bottom:1px}' +
+    '.sig-labels{display:flex;gap:40px;font-size:11px;margin-top:3px}' +
+    '.sig-name-label{width:220px}' +
+    '.sig-date-label{width:100px}' +
     '.sig-sub{font-size:11px;margin-top:4px}' +
     '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
     '</style></head><body>' +
@@ -692,7 +701,7 @@ function downloadPDF(vendor) {
     '<tr><td>Sales Period Start</td><td>' + shortDate(dateFrom) + '</td></tr>' +
     '<tr><td>Sales Period End</td><td>'   + shortDate(dateTo)   + '</td></tr>' +
     '<tr><td>Payout Date</td><td>'        + todayStr            + '</td></tr>' +
-    '<tr><td>Payment Method</td><td>Check</td></tr>' +
+    '<tr><td>Payment Method</td><td>' + document.getElementById("paymentMethod").value + '</td></tr>' +
     '</tbody></table>' +
 
     '<div class="two-col">' +
@@ -719,13 +728,15 @@ function downloadPDF(vendor) {
 
     '<div class="sig-block">' +
       '<div class="sig-label">Prepared by:</div>' +
-      '<div class="sig-name">SB</div>' +
-      '<div class="sig-line">' +
+      '<div class="sig-row">' +
         '<div class="sig-underline"></div>' +
-        '<div class="sig-date-line">' + todayStr + '</div>' +
+        '<div class="sig-date-underline">' + todayStr + '</div>' +
       '</div>' +
-      '<div class="sig-sub">Spencer Beck &nbsp;&nbsp;&nbsp; Date</div>' +
-      '<div class="sig-sub">Alpenglow Supply Company LLC</div>' +
+      '<div class="sig-labels">' +
+        '<div class="sig-name-label">Spencer Beck</div>' +
+        '<div class="sig-date-label">Date</div>' +
+      '</div>' +
+      '<div class="sig-sub" style="margin-top:6px">Alpenglow Supply Company LLC</div>' +
       '<div class="sig-sub">spencer@alpenglowsupply.com</div>' +
     '</div>' +
 
