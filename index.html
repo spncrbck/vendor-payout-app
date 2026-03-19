@@ -363,14 +363,14 @@ function renderReport(data) {
     var orderRows = "";
     processed.filter(function(o) { return o.vendorData[v.vendor]; }).forEach(function(o) {
       var d = o.vendorData[v.vendor];
-      var gwBadge = o.isCashOrder ? "badge-cash" : "badge-card";
-      var gwLabel = o.paymentGateway || "unknown";
+      var paymentBadge = o.paymentTag === "cash" ? '<span class="badge badge-cash">Cash</span>'
+                       : o.paymentTag === "card" ? '<span class="badge badge-card">Card</span>'
+                       : '—';
       orderRows +=
         '<tr>' +
         '<td style="font-weight:600">' + o.orderId + '</td>' +
         '<td style="color:var(--text-muted)">' + o.date + '</td>' +
-        '<td><span class="badge ' + (o.isMixed ? "badge-mixed" : "badge-solo") + '">' + (o.isMixed ? "mixed" : "solo") + '</span></td>' +
-        '<td><span class="badge ' + gwBadge + '">' + gwLabel + '</span></td>' +
+        '<td>' + paymentBadge + '</td>' +
         '<td class="num">' + fmt(d.sub) + '</td>' +
         '<td class="num">' + fmt(d.taxShare) + '</td>' +
         '<td class="num" style="color:var(--red)">' + (d.totalFeeShare > 0 ? '−' + fmt(d.totalFeeShare) : '—') + '</td>' +
@@ -411,7 +411,7 @@ function renderReport(data) {
           '<hr class="divider">' +
           '<div class="table-wrap"><table>' +
             '<thead><tr>' +
-              '<th>Order</th><th>Date</th><th>Type</th><th>Payment</th>' +
+              '<th>Order</th><th>Date</th><th>Payment</th>' +
               '<th class="num">Subtotal</th><th class="num">Tax</th><th class="num">Fee</th><th class="num">Discount</th><th class="num">Net</th>' +
             '</tr></thead>' +
             '<tbody>' + orderRows + '</tbody>' +
@@ -437,8 +437,9 @@ function processOrder(order) {
   var hasAlp = all.indexOf(ALPENGLOW_VENDOR) !== -1;
   var third = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; });
   var isMixed = (hasAlp && third.length > 0) || third.length > 1;
-  var paymentGateway = (order.payment_gateway_names && order.payment_gateway_names[0]) || order.payment_gateway || "";
-  var isCashOrder = NO_FEE_GATEWAYS.indexOf(paymentGateway) !== -1;
+  var tags = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
+  var isCashOrder = tags.indexOf("cash") !== -1;
+  var paymentTag  = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : "");
   var effectiveRate = isCashOrder ? 0 : FEE_RATE;
   var effectiveFlat = isCashOrder ? 0 : FEE_FLAT;
 
@@ -471,9 +472,8 @@ function processOrder(order) {
   return {
     orderId: order.name,
     date: order.created_at.slice(0, 10),
-    isMixed: isMixed,
     isCashOrder: isCashOrder,
-    paymentGateway: paymentGateway,
+    paymentTag: paymentTag,
     vendorData: vendorData,
     thirdPartyVendors: third
   };
@@ -499,10 +499,10 @@ function buildSummaries(processed) {
 }
 
 function downloadCSV(vendor, processed) {
-  var rows = [["Order","Date","Type","Payment","Subtotal","Tax","Fee","Discount","Net Payout"]];
+  var rows = [["Order","Date","Payment","Subtotal","Tax","Fee","Discount","Net Payout"]];
   processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
     var d = o.vendorData[vendor];
-    rows.push([o.orderId, o.date, o.isMixed?"mixed":"solo", o.paymentGateway||"", d.sub, d.taxShare, d.totalFeeShare, d.discountShare, d.netPayout]);
+    rows.push([o.orderId, o.date, o.paymentTag||"", d.sub, d.taxShare, d.totalFeeShare, d.discountShare, d.netPayout]);
   });
   var csv = rows.map(function(r) { return r.join(","); }).join("\n");
   var a = document.createElement("a");
