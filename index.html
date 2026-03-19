@@ -266,13 +266,6 @@
           <label>Vendor</label>
           <select id="vendorFilter"><option value="all">All vendors</option></select>
         </div>
-        <div>
-          <label>Payment Method</label>
-          <select id="paymentMethod">
-            <option value="Check">Check</option>
-            <option value="Direct Deposit">Direct Deposit</option>
-          </select>
-        </div>
         <button class="btn-primary" id="generateBtn" onclick="generateReport()">Generate report</button>
       </div>
       <div class="date-presets">
@@ -436,6 +429,10 @@ function renderReport(data) {
         '<div class="vendor-header">' +
           '<div><div class="vendor-name">' + v.vendor + '</div><div class="vendor-meta">' + metaStr + '</div></div>' +
           '<div class="vendor-actions">' +
+            '<select class="btn-secondary btn-sm payment-method-select" data-vendor="' + v.vendor.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '" style="padding:0.32rem 0.6rem;font-size:12px;border-radius:var(--radius-sm);cursor:pointer">' +
+              '<option value="Check">Check</option>' +
+              '<option value="Direct Deposit">Direct Deposit</option>' +
+            '</select>' +
             '<button class="btn-secondary btn-sm btn-csv" data-vendor="' + v.vendor.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">↓ CSV</button>' +
             '<button class="btn-secondary btn-sm btn-pdf" data-vendor="' + v.vendor.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">↓ PDF</button>' +
           '</div>' +
@@ -701,7 +698,7 @@ function downloadPDF(vendor) {
     '<tr><td>Sales Period Start</td><td>' + shortDate(dateFrom) + '</td></tr>' +
     '<tr><td>Sales Period End</td><td>'   + shortDate(dateTo)   + '</td></tr>' +
     '<tr><td>Payout Date</td><td>'        + todayStr            + '</td></tr>' +
-    '<tr><td>Payment Method</td><td>' + document.getElementById("paymentMethod").value + '</td></tr>' +
+    '<tr><td>Payment Method</td><td>' + (function(){ var sel = document.querySelector('.payment-method-select[data-vendor="' + vendor.replace(/"/g,'\\"') + '"]'); return sel ? sel.value : 'Check'; })() + '</td></tr>' +
     '</tbody></table>' +
 
     '<div class="two-col">' +
