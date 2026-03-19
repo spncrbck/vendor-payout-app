@@ -68,6 +68,28 @@
     /* ── LAYOUT ────────────────────────────────────────── */
     .app { max-width: 1040px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
 
+    /* ── TABS ──────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 0.25rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.75rem;
+    }
+    .tab {
+      padding: 0.65rem 1.1rem;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--green); border-bottom-color: var(--green); }
+
     /* ── CARDS ─────────────────────────────────────────── */
     .card {
       background: var(--surface);
@@ -77,11 +99,19 @@
       margin-bottom: 1rem;
       box-shadow: var(--shadow-sm);
     }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--text-muted);
+      margin-bottom: 1.1rem;
+    }
 
     /* ── CONTROLS ──────────────────────────────────────── */
     .controls { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
     label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: .4px; }
-    select, input[type="date"] {
+    select, input[type="date"], input[type="number"], input[type="text"] {
       font-size: 13.5px;
       padding: 0.52rem 0.85rem;
       border: 1.5px solid var(--border);
@@ -115,6 +145,13 @@
     }
     .btn-secondary:hover { background: var(--bg); }
     .btn-sm { font-size: 12px; font-weight: 500; padding: 0.35rem 0.85rem; border-radius: var(--radius-sm); }
+    .btn-ghost {
+      background: none; color: var(--text-muted);
+      font-size: 12px; padding: 0.3rem 0.6rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+    }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); border-color: var(--border); }
 
     /* ── METRICS ───────────────────────────────────────── */
     .metrics {
@@ -134,7 +171,6 @@
     .metric.m-green { border-left-color: var(--green); }
     .metric.m-red   { border-left-color: var(--red); }
     .metric.m-blue  { border-left-color: var(--blue); }
-    .metric.m-gray  { border-left-color: var(--text-faint); }
     .metric-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin-bottom: 0.4rem; }
     .metric-value { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.5px; }
     .metric-value.green { color: var(--green); }
@@ -202,14 +238,54 @@
       padding: 0.18rem 0.55rem;
       border-radius: 99px; letter-spacing: .2px; white-space: nowrap;
     }
-    .badge-mixed { background: var(--amber-light); color: var(--amber); }
-    .badge-solo  { background: var(--blue-light);  color: var(--blue); }
     .badge-cash  { background: var(--green-light); color: var(--green-dark); }
     .badge-card  { background: #f0f0f5;            color: #444; }
+    .badge-modified { background: var(--amber-light); color: var(--amber); font-size: 10px; padding: 0.12rem 0.45rem; }
+
+    /* ── SETTINGS TABLE ────────────────────────────────── */
+    .settings-table { width: 100%; border-collapse: collapse; }
+    .settings-table th {
+      text-align: left; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .5px;
+      color: var(--text-muted); padding: 0 0.75rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .settings-table td { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+    .settings-table tbody tr:last-child td { border-bottom: none; }
+    .settings-table tbody tr:hover td { background: #fafbfc; }
+    .settings-vendor-name { font-weight: 600; font-size: 13.5px; }
+    .settings-shopify-val { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+
+    /* Toggle/Checkbox styling */
+    .toggle-wrap { display: flex; align-items: center; gap: 0.5rem; }
+    .toggle { position: relative; width: 36px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: #d1d5db; border-radius: 20px;
+      cursor: pointer; transition: background .2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute; width: 14px; height: 14px;
+      left: 3px; top: 3px;
+      background: #fff; border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    }
+    .toggle input:checked + .toggle-slider { background: var(--green); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+    .toggle-label { font-size: 13px; color: var(--text-muted); }
+    .toggle input:checked ~ .toggle-label { color: var(--text); }
 
     /* ── MISC ──────────────────────────────────────────── */
     .divider { border: none; border-top: 1px solid var(--border-soft); margin: 1.1rem 0; }
     .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 13.5px; }
+    .info-banner {
+      background: var(--blue-light); border: 1px solid #c5d0f5;
+      border-radius: var(--radius-sm); padding: 0.7rem 1rem;
+      color: var(--blue); font-size: 12.5px; margin-bottom: 1.25rem;
+    }
     .error-banner {
       background: var(--red-light); border: 1px solid #f5c6c2;
       border-radius: var(--radius-sm); padding: 0.75rem 1rem;
@@ -246,40 +322,94 @@
 </header>
 
 <div class="app">
-  <div class="card">
-    <div class="controls">
-      <div><label>From</label><input type="date" id="dateFrom" /></div>
-      <div><label>To</label><input type="date" id="dateTo" /></div>
-      <div>
-        <label>Vendor</label>
-        <select id="vendorFilter"><option value="all">All vendors</option></select>
-      </div>
-      <button class="btn-primary" id="generateBtn" onclick="generateReport()">Generate report</button>
-    </div>
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('report')">Payout Report</button>
+    <button class="tab" onclick="showTab('settings')">Vendor Settings</button>
   </div>
 
-  <div id="errorBanner" class="error-banner" style="display:none"></div>
-  <div id="metricsBar" class="metrics" style="display:none"></div>
-  <div id="vendorCards"></div>
+  <!-- ── REPORT TAB ───────────────────────────────────── -->
+  <div id="tab-report">
+    <div class="card">
+      <div class="controls">
+        <div><label>From</label><input type="date" id="dateFrom" /></div>
+        <div><label>To</label><input type="date" id="dateTo" /></div>
+        <div>
+          <label>Vendor</label>
+          <select id="vendorFilter"><option value="all">All vendors</option></select>
+        </div>
+        <button class="btn-primary" id="generateBtn" onclick="generateReport()">Generate report</button>
+      </div>
+    </div>
+    <div id="errorBanner" class="error-banner" style="display:none"></div>
+    <div id="metricsBar" class="metrics" style="display:none"></div>
+    <div id="vendorCards"></div>
+  </div>
+
+  <!-- ── SETTINGS TAB ─────────────────────────────────── -->
+  <div id="tab-settings" style="display:none">
+    <div class="card">
+      <div class="card-title">Vendor Settings</div>
+      <div class="info-banner">
+        Settings are saved in this browser. Commission rate defaults to the value in Shopify but can be overridden here.
+        Changes take effect the next time you generate a report.
+      </div>
+      <div id="settingsContent"><p class="empty">Loading vendors from Shopify…</p></div>
+    </div>
+  </div>
 </div>
 
 <script>
-var WORKER_URL = "https://vendor-payout.spencer-739.workers.dev";
-var FEE_FLAT = 0.00;
-var FEE_RATE = 0.027;
+var WORKER_URL  = "https://vendor-payout.spencer-739.workers.dev";
+var FEE_FLAT    = 0.00;
+var FEE_RATE    = 0.027;
 var ALPENGLOW_VENDOR = "Alpenglow";
-var NO_FEE_GATEWAYS = ["cash", "gift_card", "manual", "exchange_credit", "store_credit"];
 
-// Keyed by vendor name: { alpenglowKeeps: 30 }
-// alpenglowKeeps = integer % Alpenglow keeps (e.g. 30 = keep 30%, pay vendor 70%)
-// 0 = pass-through, vendor gets everything minus processing fees
+// Loaded from Shopify: { "Vendor Name": { alpenglowKeeps: 30 } }
 var shopifyVendors = {};
 
+// localStorage overrides: { "Vendor Name": { commissionRate: 30, passAlongTax: true } }
+var vendorSettings = {};
+
 window.addEventListener("DOMContentLoaded", function() {
+  loadVendorSettings();
   initDateRange();
   loadVendors();
 });
 
+/* ── SETTINGS PERSISTENCE ───────────────────────────── */
+function loadVendorSettings() {
+  try { vendorSettings = JSON.parse(localStorage.getItem("alpenglow_vendor_settings") || "{}"); }
+  catch(e) { vendorSettings = {}; }
+}
+
+function saveVendorSettings() {
+  localStorage.setItem("alpenglow_vendor_settings", JSON.stringify(vendorSettings));
+}
+
+// Returns effective settings for a vendor, merging Shopify defaults + local overrides
+function getVendorSetting(name) {
+  var ls      = vendorSettings[name] || {};
+  var shopify = shopifyVendors[name] || {};
+  var shopifyRate = shopify.alpenglowKeeps !== undefined ? shopify.alpenglowKeeps : 0;
+  return {
+    commissionRate: ls.commissionRate !== undefined ? ls.commissionRate : shopifyRate,
+    passAlongTax:   ls.passAlongTax   !== undefined ? ls.passAlongTax   : true,
+    shopifyRate:    shopifyRate,
+    isModified:     ls.commissionRate !== undefined && ls.commissionRate !== shopifyRate
+  };
+}
+
+/* ── TAB SWITCHING ──────────────────────────────────── */
+function showTab(tab) {
+  document.getElementById("tab-report").style.display   = tab === "report"   ? "" : "none";
+  document.getElementById("tab-settings").style.display = tab === "settings" ? "" : "none";
+  document.querySelectorAll(".tab").forEach(function(el, i) {
+    el.classList.toggle("active", (i === 0 && tab === "report") || (i === 1 && tab === "settings"));
+  });
+  if (tab === "settings") renderSettingsTab();
+}
+
+/* ── VENDOR LOADING ─────────────────────────────────── */
 function loadVendors() {
   apiFetch("/vendors").then(function(data) {
     var filter = document.getElementById("vendorFilter");
@@ -297,6 +427,66 @@ function loadVendors() {
   });
 }
 
+/* ── SETTINGS TAB RENDER ────────────────────────────── */
+function renderSettingsTab() {
+  var names = Object.keys(shopifyVendors).sort();
+  if (!names.length) {
+    document.getElementById("settingsContent").innerHTML = '<p class="empty">No vendors found. Make sure Shopify collections have vendor rules configured.</p>';
+    return;
+  }
+
+  var rows = names.map(function(name) {
+    var s = getVendorSetting(name);
+    var safeName = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    var modBadge = s.isModified ? '<span class="badge badge-modified">Modified</span>' : '';
+    return '<tr>' +
+      '<td><div class="settings-vendor-name">' + name + ' ' + modBadge + '</div>' +
+           '<div class="settings-shopify-val">Shopify: ' + s.shopifyRate + '%</div></td>' +
+      '<td>' +
+        '<div style="display:flex;align-items:center;gap:0.5rem;">' +
+          '<input type="number" min="0" max="100" value="' + s.commissionRate + '" style="width:72px" ' +
+            'onchange="updateCommissionRate(\'' + safeName + '\',this.value)" />' +
+          '<span style="font-size:12px;color:var(--text-muted);">% Alpenglow keeps</span>' +
+          (s.isModified ? ' <button class="btn-ghost" title="Reset to Shopify value" onclick="resetCommissionRate(\'' + safeName + '\')">↺ Reset</button>' : '') +
+        '</div>' +
+      '</td>' +
+      '<td>' +
+        '<label class="toggle" title="Include tax in vendor payout">' +
+          '<input type="checkbox"' + (s.passAlongTax ? ' checked' : '') + ' onchange="updatePassAlongTax(\'' + safeName + '\',this.checked)" />' +
+          '<span class="toggle-slider"></span>' +
+        '</label>' +
+      '</td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById("settingsContent").innerHTML =
+    '<table class="settings-table">' +
+      '<thead><tr><th>Vendor</th><th>Commission Rate</th><th>Pass Along Tax</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>';
+}
+
+function updateCommissionRate(name, val) {
+  var rate = Math.min(100, Math.max(0, parseInt(val) || 0));
+  if (!vendorSettings[name]) vendorSettings[name] = {};
+  vendorSettings[name].commissionRate = rate;
+  saveVendorSettings();
+  renderSettingsTab();
+}
+
+function resetCommissionRate(name) {
+  if (vendorSettings[name]) delete vendorSettings[name].commissionRate;
+  saveVendorSettings();
+  renderSettingsTab();
+}
+
+function updatePassAlongTax(name, checked) {
+  if (!vendorSettings[name]) vendorSettings[name] = {};
+  vendorSettings[name].passAlongTax = checked;
+  saveVendorSettings();
+}
+
+/* ── DATE INIT ──────────────────────────────────────── */
 function initDateRange() {
   var now = new Date();
   var firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -309,6 +499,7 @@ function isoDate(d) {
   return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
 }
 
+/* ── REPORT ─────────────────────────────────────────── */
 function generateReport() {
   var btn = document.getElementById("generateBtn");
   var dateFrom = document.getElementById("dateFrom").value;
@@ -333,9 +524,9 @@ function generateReport() {
 
 function renderReport(data) {
   var filterVendor = document.getElementById("vendorFilter").value;
-  var processed = (data.orders || []).map(function(o) { return processOrder(o); });
-  var summaries = buildSummaries(processed);
-  var allVendors = Object.values(summaries);
+  var processed    = (data.orders || []).map(processOrder);
+  var summaries    = buildSummaries(processed);
+  var allVendors   = Object.values(summaries);
   var activeVendors = filterVendor === "all"
     ? allVendors
     : allVendors.filter(function(s) { return s.vendor === filterVendor; });
@@ -346,10 +537,11 @@ function renderReport(data) {
     return;
   }
 
-  var totalPayout   = activeVendors.reduce(function(s,v) { return s+v.netPayout; }, 0);
-  var totalFees     = activeVendors.reduce(function(s,v) { return s+v.processingFees; }, 0);
-  var totalGross    = activeVendors.reduce(function(s,v) { return s+v.grossSales; }, 0);
-  var totalReturns  = activeVendors.reduce(function(s,v) { return s+v.totalReturns; }, 0);
+  var totalPayout     = activeVendors.reduce(function(s,v) { return s+v.netPayout; }, 0);
+  var totalFees       = activeVendors.reduce(function(s,v) { return s+v.processingFees; }, 0);
+  var totalGross      = activeVendors.reduce(function(s,v) { return s+v.grossSales; }, 0);
+  var totalReturns    = activeVendors.reduce(function(s,v) { return s+v.totalReturns; }, 0);
+  var totalCommission = activeVendors.reduce(function(s,v) { return s+v.alpenglowCommission; }, 0);
 
   var metrics = document.getElementById("metricsBar");
   metrics.style.display = "grid";
@@ -357,6 +549,7 @@ function renderReport(data) {
     '<div class="metric m-blue"><div class="metric-label">Gross sales</div><div class="metric-value">' + fmt(totalGross) + '</div></div>' +
     (totalReturns > 0 ? '<div class="metric m-red"><div class="metric-label">Returns</div><div class="metric-value red">−' + fmt(totalReturns) + '</div></div>' : '') +
     '<div class="metric m-red"><div class="metric-label">Processing fees</div><div class="metric-value red">−' + fmt(totalFees) + '</div></div>' +
+    (totalCommission > 0 ? '<div class="metric m-red"><div class="metric-label">Commission</div><div class="metric-value red">−' + fmt(totalCommission) + '</div></div>' : '') +
     '<div class="metric m-green"><div class="metric-label">Total payout owed</div><div class="metric-value green">' + fmt(totalPayout) + '</div></div>';
 
   var cardsHtml = "";
@@ -373,49 +566,42 @@ function renderReport(data) {
         '<td style="color:var(--text-muted)">' + o.date + '</td>' +
         '<td>' + paymentBadge + '</td>' +
         '<td class="num">' + fmt(d.sub) + '</td>' +
-        '<td class="num">' + fmt(d.taxShare) + '</td>' +
+        '<td class="num" style="color:' + (d.taxIncluded ? 'inherit' : 'var(--text-faint)') + '">' + (d.taxIncluded ? fmt(d.taxShare) : '<span title="Tax not passed along">—</span>') + '</td>' +
         '<td class="num" style="color:var(--red)">' + (d.totalFeeShare > 0 ? '−' + fmt(d.totalFeeShare) : '—') + '</td>' +
         '<td class="num" style="color:var(--red)">' + (d.discountShare > 0 ? '−' + fmt(d.discountShare) : '—') + '</td>' +
         '<td class="num" style="color:var(--red)">' + (d.returnShare > 0 ? '−' + fmt(d.returnShare) : '—') + '</td>' +
+        '<td class="num" style="color:var(--red)">' + (d.commission > 0 ? '−' + fmt(d.commission) : '—') + '</td>' +
         '<td class="num" style="font-weight:700;color:var(--green)">' + fmt(d.netPayout) + '</td>' +
         '</tr>';
     });
 
-    var alpenglowKeeps = v.alpenglowKeeps || 0;
-    var metaStr = alpenglowKeeps > 0
-      ? 'Alpenglow keeps ' + alpenglowKeeps + '% &nbsp;·&nbsp; ' + v.orderCount + ' order' + (v.orderCount!==1?'s':'')
-      : 'Pass-through &nbsp;·&nbsp; ' + v.orderCount + ' order' + (v.orderCount!==1?'s':'');
-
-    var commissionHtml = v.alpenglowCommission > 0
-      ? '<div class="payout-cell"><div class="pl">Commission kept</div><div class="pv red">−' + fmt(v.alpenglowCommission) + '</div></div>'
-      : '';
+    var s = getVendorSetting(v.vendor);
+    var metaStr = s.commissionRate > 0
+      ? s.commissionRate + '% commission &nbsp;·&nbsp; ' + v.orderCount + ' order' + (v.orderCount !== 1 ? 's' : '')
+      : 'Pass-through &nbsp;·&nbsp; ' + v.orderCount + ' order' + (v.orderCount !== 1 ? 's' : '');
 
     cardsHtml +=
       '<div class="vendor-card">' +
         '<div class="vendor-header">' +
-          '<div>' +
-            '<div class="vendor-name">' + v.vendor + '</div>' +
-            '<div class="vendor-meta">' + metaStr + '</div>' +
-          '</div>' +
-          '<div class="vendor-actions">' +
-            '<button class="btn-secondary btn-sm" onclick="downloadCSV(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ CSV</button>' +
-          '</div>' +
+          '<div><div class="vendor-name">' + v.vendor + '</div><div class="vendor-meta">' + metaStr + '</div></div>' +
+          '<div class="vendor-actions"><button class="btn-secondary btn-sm" onclick="downloadCSV(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ CSV</button></div>' +
         '</div>' +
         '<div class="vendor-body">' +
           '<div class="payout-grid">' +
             '<div class="payout-cell"><div class="pl">Gross sales</div><div class="pv">' + fmt(v.grossSales) + '</div></div>' +
-            '<div class="payout-cell"><div class="pl">Tax collected</div><div class="pv">' + fmt(v.taxCollected) + '</div></div>' +
+            (v.taxCollected > 0 ? '<div class="payout-cell"><div class="pl">Tax passed along</div><div class="pv">' + fmt(v.taxCollected) + '</div></div>' : '') +
             '<div class="payout-cell"><div class="pl">Processing fees</div><div class="pv red">' + (v.processingFees > 0 ? '−' + fmt(v.processingFees) : '—') + '</div></div>' +
             (v.totalDiscounts > 0 ? '<div class="payout-cell"><div class="pl">Discounts</div><div class="pv red">−' + fmt(v.totalDiscounts) + '</div></div>' : '') +
-            (v.totalReturns > 0 ? '<div class="payout-cell"><div class="pl">Returns</div><div class="pv red">−' + fmt(v.totalReturns) + '</div></div>' : '') +
-            commissionHtml +
+            (v.totalReturns > 0   ? '<div class="payout-cell"><div class="pl">Returns</div><div class="pv red">−' + fmt(v.totalReturns) + '</div></div>' : '') +
+            (v.alpenglowCommission > 0 ? '<div class="payout-cell"><div class="pl">Commission</div><div class="pv red">−' + fmt(v.alpenglowCommission) + '</div></div>' : '') +
             '<div class="payout-cell highlight"><div class="pl">Net payout</div><div class="pv green">' + fmt(v.netPayout) + '</div></div>' +
           '</div>' +
           '<hr class="divider">' +
           '<div class="table-wrap"><table>' +
             '<thead><tr>' +
               '<th>Order</th><th>Date</th><th>Payment</th>' +
-              '<th class="num">Subtotal</th><th class="num">Tax</th><th class="num">Fee</th><th class="num">Discount</th><th class="num">Return</th><th class="num">Net</th>' +
+              '<th class="num">Subtotal</th><th class="num">Tax</th><th class="num">Fee</th>' +
+              '<th class="num">Discount</th><th class="num">Return</th><th class="num">Commission</th><th class="num">Net</th>' +
             '</tr></thead>' +
             '<tbody>' + orderRows + '</tbody>' +
           '</table></div>' +
@@ -426,6 +612,7 @@ function renderReport(data) {
   document.getElementById("vendorCards").innerHTML = cardsHtml;
 }
 
+/* ── ORDER PROCESSING ───────────────────────────────── */
 function processOrder(order) {
   var lines = order.line_items || [];
   var vs = {};
@@ -436,7 +623,7 @@ function processOrder(order) {
     lineItemVendor[item.id] = v;
   });
 
-  // Tally refunded amounts per vendor
+  // Tally refunds per vendor
   var returnsByVendor = {};
   (order.refunds || []).forEach(function(refund) {
     (refund.refund_line_items || []).forEach(function(rli) {
@@ -444,43 +631,46 @@ function processOrder(order) {
       returnsByVendor[v] = (returnsByVendor[v] || 0) + parseFloat(rli.subtotal || 0);
     });
   });
-  var sub = Object.values(vs).reduce(function(s,v) { return s+v; }, 0);
-  var tax = parseFloat(order.total_tax || 0);
+
+  var sub           = Object.values(vs).reduce(function(s,v) { return s+v; }, 0);
+  var tax           = parseFloat(order.total_tax || 0);
   var totalDiscount = parseFloat(order.total_discounts || 0);
-  var all = Object.keys(vs);
-  var hasAlp = all.indexOf(ALPENGLOW_VENDOR) !== -1;
-  var third = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; });
-  var isMixed = (hasAlp && third.length > 0) || third.length > 1;
-  var tags = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
-  var isCashOrder = tags.indexOf("cash") !== -1;
-  var paymentTag  = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : "");
+  var all           = Object.keys(vs);
+  var tags          = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
+  var isCashOrder   = tags.indexOf("cash") !== -1;
+  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : "");
   var effectiveRate = isCashOrder ? 0 : FEE_RATE;
   var effectiveFlat = isCashOrder ? 0 : FEE_FLAT;
+  var isMixed       = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; }).length > 1 ||
+                      (all.indexOf(ALPENGLOW_VENDOR) !== -1 && all.length > 1);
 
   var vendorData = {};
   all.forEach(function(v) {
-    var s = vs[v];
-    var share = sub > 0 ? s / sub : 0;
-    var taxShare = r2(tax * share);
+    var s            = vs[v];
+    var share        = sub > 0 ? s / sub : 0;
+    var taxShare     = r2(tax * share);
     var discountShare = r2(totalDiscount * share);
-    var returnShare = r2(returnsByVendor[v] || 0);
-    var flat = isMixed ? effectiveFlat / all.length : effectiveFlat;
-    var fee = r2(flat + effectiveRate * (s - discountShare + taxShare));
-    var net = r2(s + taxShare - discountShare - fee - returnShare);
+    var returnShare  = r2(returnsByVendor[v] || 0);
 
-    var shopifyData = shopifyVendors[v];
-    var alpenglowKeeps = shopifyData ? shopifyData.alpenglowKeeps : 0;
-    var vendorRate = (100 - alpenglowKeeps) / 100;
+    var setting      = getVendorSetting(v);
+    var passAlongTax = setting.passAlongTax;
+    var taxForNet    = passAlongTax ? taxShare : 0;
+
+    var flat         = isMixed ? effectiveFlat / all.length : effectiveFlat;
+    var fee          = r2(flat + effectiveRate * (s - discountShare + taxShare));
+    var grossForSplit = r2(s + taxForNet - discountShare - fee - returnShare);
+    var commission   = r2(grossForSplit * setting.commissionRate / 100);
+    var netPayout    = r2(grossForSplit - commission);
 
     vendorData[v] = {
       sub: r2(s),
       taxShare: taxShare,
+      taxIncluded: passAlongTax,
       discountShare: discountShare,
       returnShare: returnShare,
       totalFeeShare: fee,
-      alpenglowKeeps: alpenglowKeeps,
-      alpenglowCommission: r2(net * (1 - vendorRate)),
-      netPayout: r2(net * vendorRate)
+      commission: commission,
+      netPayout: netPayout
     };
   });
 
@@ -489,24 +679,24 @@ function processOrder(order) {
     date: order.created_at.slice(0, 10),
     isCashOrder: isCashOrder,
     paymentTag: paymentTag,
-    vendorData: vendorData,
-    thirdPartyVendors: third
+    vendorData: vendorData
   };
 }
 
+/* ── SUMMARIES ──────────────────────────────────────── */
 function buildSummaries(processed) {
   var s = {};
   processed.forEach(function(order) {
     Object.entries(order.vendorData).forEach(function(entry) {
       var v = entry[0]; var d = entry[1];
       if (v === ALPENGLOW_VENDOR) return;
-      if (!s[v]) s[v] = { vendor:v, grossSales:0, taxCollected:0, totalDiscounts:0, totalReturns:0, processingFees:0, alpenglowCommission:0, netPayout:0, orderCount:0, alpenglowKeeps: d.alpenglowKeeps };
+      if (!s[v]) s[v] = { vendor:v, grossSales:0, taxCollected:0, totalDiscounts:0, totalReturns:0, processingFees:0, alpenglowCommission:0, netPayout:0, orderCount:0 };
       s[v].grossSales          = r2(s[v].grossSales          + d.sub);
-      s[v].taxCollected        = r2(s[v].taxCollected        + d.taxShare);
+      s[v].taxCollected        = r2(s[v].taxCollected        + (d.taxIncluded ? d.taxShare : 0));
       s[v].totalDiscounts      = r2(s[v].totalDiscounts      + d.discountShare);
       s[v].totalReturns        = r2(s[v].totalReturns        + d.returnShare);
       s[v].processingFees      = r2(s[v].processingFees      + d.totalFeeShare);
-      s[v].alpenglowCommission = r2(s[v].alpenglowCommission + d.alpenglowCommission);
+      s[v].alpenglowCommission = r2(s[v].alpenglowCommission + d.commission);
       s[v].netPayout           = r2(s[v].netPayout           + d.netPayout);
       s[v].orderCount++;
     });
@@ -514,11 +704,14 @@ function buildSummaries(processed) {
   return s;
 }
 
+/* ── CSV EXPORT ─────────────────────────────────────── */
 function downloadCSV(vendor, processed) {
-  var rows = [["Order","Date","Payment","Subtotal","Tax","Fee","Discount","Return","Net Payout"]];
+  var rows = [["Order","Date","Payment","Subtotal","Tax","Fee","Discount","Return","Commission","Net Payout"]];
   processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
     var d = o.vendorData[vendor];
-    rows.push([o.orderId, o.date, o.paymentTag||"", d.sub, d.taxShare, d.totalFeeShare, d.discountShare, d.returnShare, d.netPayout]);
+    rows.push([o.orderId, o.date, o.paymentTag||"", d.sub,
+      d.taxIncluded ? d.taxShare : 0,
+      d.totalFeeShare, d.discountShare, d.returnShare, d.commission, d.netPayout]);
   });
   var csv = rows.map(function(r) { return r.join(","); }).join("\n");
   var a = document.createElement("a");
@@ -529,6 +722,7 @@ function downloadCSV(vendor, processed) {
   a.click();
 }
 
+/* ── UTILITIES ──────────────────────────────────────── */
 function apiFetch(path) {
   return fetch(WORKER_URL + path).then(function(res) {
     if (!res.ok) return res.text().then(function(t) { throw new Error("API error " + res.status + ": " + t); });
