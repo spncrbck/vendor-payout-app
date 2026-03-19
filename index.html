@@ -199,8 +199,9 @@
       padding: 0.18rem 0.55rem;
       border-radius: 99px; letter-spacing: .2px; white-space: nowrap;
     }
-    .badge-cash  { background: var(--green-light); color: var(--green-dark); }
-    .badge-card  { background: #f0f0f5;            color: #444; }
+    .badge-cash   { background: var(--green-light); color: var(--green-dark); }
+    .badge-card   { background: #f0f0f5;            color: #444; }
+    .badge-online { background: var(--blue-light);  color: var(--blue); }
 
     /* ── DATE PRESETS ───────────────────────────────────── */
     .date-presets { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.65rem; }
@@ -270,6 +271,7 @@
       </div>
       <div class="date-presets">
         <span style="font-size:11px;font-weight:600;color:var(--text-faint);letter-spacing:.4px;text-transform:uppercase;align-self:center;margin-right:0.15rem;">Quick:</span>
+        <button class="btn-preset" id="preset-this-month" onclick="setDateRange('this-month')">This Month</button>
         <button class="btn-preset" id="preset-prev-month" onclick="setDateRange('prev-month')">Prev Month</button>
         <button class="btn-preset" id="preset-ytd"        onclick="setDateRange('ytd')">Year to Date</button>
         <button class="btn-preset" id="preset-q1"         onclick="setDateRange('q1')">Q1</button>
@@ -401,8 +403,9 @@ function renderReport(data) {
     var orderRows = "";
     processed.filter(function(o) { return o.vendorData[v.vendor]; }).forEach(function(o) {
       var d = o.vendorData[v.vendor];
-      var paymentBadge = o.paymentTag === "cash" ? '<span class="badge badge-cash">Cash</span>'
-                       : o.paymentTag === "card" ? '<span class="badge badge-card">Card</span>'
+      var paymentBadge = o.paymentTag === "cash"   ? '<span class="badge badge-cash">Cash</span>'
+                       : o.paymentTag === "card"   ? '<span class="badge badge-card">Card</span>'
+                       : o.paymentTag === "online" ? '<span class="badge badge-online">Online</span>'
                        : '—';
       orderRows +=
         '<tr>' +
@@ -496,7 +499,8 @@ function processOrder(order) {
   var all           = Object.keys(vs);
   var tags          = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
   var isCashOrder   = tags.indexOf("cash") !== -1;
-  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : "");
+  var isOnlineOrder = tags.indexOf("online") !== -1;
+  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : (isOnlineOrder ? "online" : ""));
   var effectiveRate = isCashOrder ? 0 : FEE_RATE;
   var effectiveFlat = isCashOrder ? 0 : FEE_FLAT;
   var isMixed       = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; }).length > 1 ||
@@ -589,6 +593,10 @@ function setDateRange(preset) {
   var y   = now.getFullYear();
   var from, to;
   switch (preset) {
+    case 'this-month':
+      from = isoDate(new Date(y, now.getMonth(), 1));
+      to   = isoDate(now);
+      break;
     case 'prev-month':
       from = isoDate(new Date(y, now.getMonth() - 1, 1));
       to   = isoDate(new Date(y, now.getMonth(), 0));
