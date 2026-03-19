@@ -219,6 +219,19 @@
     .btn-preset:hover { background: var(--green-light); border-color: #9ddfd0; color: var(--green-dark); }
     .btn-preset.active { background: var(--green-light); border-color: #9ddfd0; color: var(--green-dark); }
 
+    /* ── NOTES ─────────────────────────────────────────── */
+    .notes-area { margin-top: 1rem; }
+    .notes-label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 0.4rem; display: block; }
+    .vendor-notes {
+      width: 100%; resize: vertical;
+      font-size: 13px; font-family: inherit; color: var(--text);
+      border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0.55rem 0.75rem; background: var(--surface);
+      outline: none; transition: border-color .15s, box-shadow .15s;
+      line-height: 1.5;
+    }
+    .vendor-notes:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(0,128,96,.12); }
+
     /* ── MISC ──────────────────────────────────────────── */
     .divider { border: none; border-top: 1px solid var(--border-soft); margin: 1.1rem 0; }
     .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 13.5px; }
@@ -289,9 +302,11 @@
 </div>
 
 <script>
-var WORKER_URL  = "https://vendor-payout.spencer-739.workers.dev";
-var FEE_FLAT    = 0.00;
-var FEE_RATE    = 0.027;
+var WORKER_URL       = "https://vendor-payout.spencer-739.workers.dev";
+var FEE_FLAT         = 0.00;
+var FEE_RATE         = 0.027;
+var ONLINE_FEE_FLAT  = 0.30;
+var ONLINE_FEE_RATE  = 0.029;
 var ALPENGLOW_VENDOR = "Alpenglow";
 
 // Loaded from Shopify: { "Vendor Name": { alpenglowKeeps: 30, passAlongTax: true } }
@@ -461,6 +476,10 @@ function renderReport(data) {
             '</tr></thead>' +
             '<tbody>' + orderRows + '</tbody>' +
           '</table></div>' +
+          '<div class="notes-area">' +
+            '<label class="notes-label">Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-faint)">(appears on PDF)</span></label>' +
+            '<textarea class="vendor-notes" data-vendor="' + v.vendor.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '" placeholder="Add any notes for this payout…" rows="2"></textarea>' +
+          '</div>' +
         '</div>' +
       '</div>';
   });
@@ -504,8 +523,8 @@ function processOrder(order) {
   var isOnlineOrder = tags.indexOf("online") !== -1;
   var isCheckOrder  = tags.indexOf("check") !== -1;
   var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : (isOnlineOrder ? "online" : (isCheckOrder ? "check" : "")));
-  var effectiveRate = isCashOrder ? 0 : FEE_RATE;
-  var effectiveFlat = isCashOrder ? 0 : FEE_FLAT;
+  var effectiveRate = isCashOrder ? 0 : (isOnlineOrder ? ONLINE_FEE_RATE : FEE_RATE);
+  var effectiveFlat = isCashOrder ? 0 : (isOnlineOrder ? ONLINE_FEE_FLAT : FEE_FLAT);
   var isMixed       = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; }).length > 1 ||
                       (all.indexOf(ALPENGLOW_VENDOR) !== -1 && all.length > 1);
 
@@ -629,6 +648,8 @@ function downloadPDF(vendor) {
   var processed = lastProcessed;
   var dateFrom = document.getElementById("dateFrom").value;
   var dateTo   = document.getElementById("dateTo").value;
+  var noteEl   = document.querySelector('.vendor-notes[data-vendor="' + vendor.replace(/"/g,'\\"') + '"]');
+  var noteText = noteEl ? noteEl.value.trim() : "";
 
   // Build summary totals
   var s = { grossSales:0, taxCollected:0, processingFees:0, totalDiscounts:0, totalReturns:0, alpenglowCommission:0, netPayout:0, orderCount:0 };
@@ -733,6 +754,7 @@ function downloadPDF(vendor) {
     'Sales tax collected on transactions is passed through to the vendor and included in the payout amount. ' +
     'Vendor is solely responsible for remitting all applicable sales/excise tax to the Washington Department of Revenue. ' +
     'Please see attached screenshots for order data.</p>' +
+    (noteText ? '<p class="notes" style="margin-top:10px;padding:8px 10px;border-left:3px solid #ccc;color:#333">' + noteText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>') + '</p>' : '') +
 
     '<div class="sig-block">' +
       '<div class="sig-label">Prepared by:</div>' +
