@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vendor Payout Reports — Alpenglow</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -278,6 +279,21 @@
     .toggle-label { font-size: 13px; color: var(--text-muted); }
     .toggle input:checked ~ .toggle-label { color: var(--text); }
 
+    /* ── DATE PRESETS ───────────────────────────────────── */
+    .date-presets { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.65rem; }
+    .btn-preset {
+      font-size: 11.5px; font-weight: 600;
+      padding: 0.28rem 0.7rem;
+      border-radius: 99px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background .12s, border-color .12s, color .12s;
+    }
+    .btn-preset:hover { background: var(--green-light); border-color: #9ddfd0; color: var(--green-dark); }
+    .btn-preset.active { background: var(--green-light); border-color: #9ddfd0; color: var(--green-dark); }
+
     /* ── MISC ──────────────────────────────────────────── */
     .divider { border: none; border-top: 1px solid var(--border-soft); margin: 1.1rem 0; }
     .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 13.5px; }
@@ -331,13 +347,22 @@
   <div id="tab-report">
     <div class="card">
       <div class="controls">
-        <div><label>From</label><input type="date" id="dateFrom" /></div>
-        <div><label>To</label><input type="date" id="dateTo" /></div>
+        <div><label>From</label><input type="date" id="dateFrom" onchange="clearActivePreset()" /></div>
+        <div><label>To</label><input type="date" id="dateTo" onchange="clearActivePreset()" /></div>
         <div>
           <label>Vendor</label>
           <select id="vendorFilter"><option value="all">All vendors</option></select>
         </div>
         <button class="btn-primary" id="generateBtn" onclick="generateReport()">Generate report</button>
+      </div>
+      <div class="date-presets">
+        <span style="font-size:11px;font-weight:600;color:var(--text-faint);letter-spacing:.4px;text-transform:uppercase;align-self:center;margin-right:0.15rem;">Quick:</span>
+        <button class="btn-preset" id="preset-prev-month" onclick="setDateRange('prev-month')">Prev Month</button>
+        <button class="btn-preset" id="preset-ytd"        onclick="setDateRange('ytd')">Year to Date</button>
+        <button class="btn-preset" id="preset-q1"         onclick="setDateRange('q1')">Q1</button>
+        <button class="btn-preset" id="preset-q2"         onclick="setDateRange('q2')">Q2</button>
+        <button class="btn-preset" id="preset-q3"         onclick="setDateRange('q3')">Q3</button>
+        <button class="btn-preset" id="preset-q4"         onclick="setDateRange('q4')">Q4</button>
       </div>
     </div>
     <div id="errorBanner" class="error-banner" style="display:none"></div>
@@ -584,7 +609,10 @@ function renderReport(data) {
       '<div class="vendor-card">' +
         '<div class="vendor-header">' +
           '<div><div class="vendor-name">' + v.vendor + '</div><div class="vendor-meta">' + metaStr + '</div></div>' +
-          '<div class="vendor-actions"><button class="btn-secondary btn-sm" onclick="downloadCSV(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ CSV</button></div>' +
+          '<div class="vendor-actions">' +
+            '<button class="btn-secondary btn-sm" onclick="downloadCSV(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ CSV</button>' +
+            '<button class="btn-secondary btn-sm" onclick="downloadPDF(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ PDF</button>' +
+          '</div>' +
         '</div>' +
         '<div class="vendor-body">' +
           '<div class="payout-grid">' +
@@ -720,6 +748,130 @@ function downloadCSV(vendor, processed) {
   var dateTo   = document.getElementById("dateTo").value;
   a.download = "payout_" + vendor.replace(/\s+/g,"_") + "_" + dateFrom + "_to_" + dateTo + ".csv";
   a.click();
+}
+
+/* ── DATE PRESETS ───────────────────────────────────── */
+function setDateRange(preset) {
+  var now = new Date();
+  var y   = now.getFullYear();
+  var from, to;
+  switch (preset) {
+    case 'prev-month':
+      from = isoDate(new Date(y, now.getMonth() - 1, 1));
+      to   = isoDate(new Date(y, now.getMonth(), 0));
+      break;
+    case 'ytd':
+      from = y + '-01-01';
+      to   = isoDate(now);
+      break;
+    case 'q1': from = y + '-01-01'; to = y + '-03-31'; break;
+    case 'q2': from = y + '-04-01'; to = y + '-06-30'; break;
+    case 'q3': from = y + '-07-01'; to = y + '-09-30'; break;
+    case 'q4': from = y + '-10-01'; to = y + '-12-31'; break;
+  }
+  document.getElementById('dateFrom').value = from;
+  document.getElementById('dateTo').value   = to;
+  document.querySelectorAll('.btn-preset').forEach(function(b) { b.classList.remove('active'); });
+  var btn = document.getElementById('preset-' + preset);
+  if (btn) btn.classList.add('active');
+}
+
+function clearActivePreset() {
+  document.querySelectorAll('.btn-preset').forEach(function(b) { b.classList.remove('active'); });
+}
+
+/* ── PDF EXPORT ─────────────────────────────────────── */
+function downloadPDF(vendor, processed) {
+  var dateFrom = document.getElementById("dateFrom").value;
+  var dateTo   = document.getElementById("dateTo").value;
+  var s = (function() {
+    var t = {}; processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
+      var d = o.vendorData[vendor];
+      t.grossSales        = r2((t.grossSales        || 0) + d.sub);
+      t.taxCollected      = r2((t.taxCollected      || 0) + (d.taxIncluded ? d.taxShare : 0));
+      t.processingFees    = r2((t.processingFees    || 0) + d.totalFeeShare);
+      t.totalDiscounts    = r2((t.totalDiscounts    || 0) + d.discountShare);
+      t.totalReturns      = r2((t.totalReturns      || 0) + d.returnShare);
+      t.alpenglowCommission = r2((t.alpenglowCommission || 0) + d.commission);
+      t.netPayout         = r2((t.netPayout         || 0) + d.netPayout);
+      t.orderCount        = (t.orderCount || 0) + 1;
+    }); return t;
+  })();
+
+  var orderRows = processed.filter(function(o) { return o.vendorData[vendor]; }).map(function(o) {
+    var d = o.vendorData[vendor];
+    var payment = o.paymentTag === 'cash' ? 'Cash' : o.paymentTag === 'card' ? 'Card' : '—';
+    return '<tr>' +
+      '<td>' + o.orderId + '</td>' +
+      '<td>' + o.date + '</td>' +
+      '<td>' + payment + '</td>' +
+      '<td class="r">' + fmt(d.sub) + '</td>' +
+      '<td class="r">' + (d.taxIncluded ? fmt(d.taxShare) : '—') + '</td>' +
+      '<td class="r">' + (d.totalFeeShare > 0 ? '−' + fmt(d.totalFeeShare) : '—') + '</td>' +
+      '<td class="r">' + (d.discountShare > 0 ? '−' + fmt(d.discountShare) : '—') + '</td>' +
+      '<td class="r">' + (d.returnShare > 0   ? '−' + fmt(d.returnShare)   : '—') + '</td>' +
+      '<td class="r">' + (d.commission > 0    ? '−' + fmt(d.commission)    : '—') + '</td>' +
+      '<td class="r bold green">' + fmt(d.netPayout) + '</td>' +
+      '</tr>';
+  }).join('');
+
+  var summaryRows = [
+    ['Gross Sales', fmt(s.grossSales)],
+    s.taxCollected      > 0 ? ['Tax Passed Along',  fmt(s.taxCollected)]           : null,
+    s.processingFees    > 0 ? ['Processing Fees',  '−' + fmt(s.processingFees)]    : null,
+    s.totalDiscounts    > 0 ? ['Discounts',         '−' + fmt(s.totalDiscounts)]   : null,
+    s.totalReturns      > 0 ? ['Returns',           '−' + fmt(s.totalReturns)]     : null,
+    s.alpenglowCommission>0 ? ['Commission (Alpenglow)', '−' + fmt(s.alpenglowCommission)] : null,
+    ['Net Payout', fmt(s.netPayout)]
+  ].filter(Boolean).map(function(row) {
+    var isNet = row[0] === 'Net Payout';
+    return '<tr' + (isNet ? ' style="font-weight:700;color:#008060;border-top:2px solid #e2e5ea"' : '') + '>' +
+      '<td>' + row[0] + '</td><td class="r">' + row[1] + '</td></tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' +
+    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:12px;color:#1c2033;padding:32px;margin:0}' +
+    'h1{font-size:20px;font-weight:700;margin:0 0 2px}' +
+    '.sub{font-size:12px;color:#6b7280;margin-bottom:24px}' +
+    '.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin:24px 0 8px}' +
+    'table{width:100%;border-collapse:collapse;margin-bottom:8px}' +
+    'th{text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#6b7280;padding:6px 8px;border-bottom:1.5px solid #e2e5ea}' +
+    'td{padding:6px 8px;border-bottom:1px solid #f0f2f5;font-size:11.5px}' +
+    'tr:last-child td{border-bottom:none}' +
+    '.r{text-align:right;font-variant-numeric:tabular-nums}' +
+    '.bold{font-weight:700}.green{color:#008060}' +
+    '.summary-table{max-width:320px}' +
+    '.summary-table td:first-child{color:#374151}' +
+    '.footer{margin-top:32px;font-size:10px;color:#9ca3af;border-top:1px solid #e2e5ea;padding-top:12px}' +
+    '</style></head><body>' +
+    '<h1>' + vendor + '</h1>' +
+    '<div class="sub">Payout Report &nbsp;·&nbsp; ' + dateFrom + ' to ' + dateTo + ' &nbsp;·&nbsp; ' + s.orderCount + ' order' + (s.orderCount !== 1 ? 's' : '') + '</div>' +
+    '<div class="section-title">Summary</div>' +
+    '<table class="summary-table"><tbody>' + summaryRows + '</tbody></table>' +
+    '<div class="section-title">Order Detail</div>' +
+    '<table><thead><tr>' +
+    '<th>Order</th><th>Date</th><th>Payment</th>' +
+    '<th class="r">Subtotal</th><th class="r">Tax</th><th class="r">Fee</th>' +
+    '<th class="r">Discount</th><th class="r">Return</th><th class="r">Commission</th><th class="r">Net</th>' +
+    '</tr></thead><tbody>' + orderRows + '</tbody></table>' +
+    '<div class="footer">Generated ' + new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}) + ' · Alpenglow Supply Co.</div>' +
+    '</body></html>';
+
+  var el = document.createElement('div');
+  el.innerHTML = html;
+  el.style.position = 'absolute';
+  el.style.left = '-9999px';
+  document.body.appendChild(el);
+
+  html2pdf().set({
+    margin: [12, 12, 12, 12],
+    filename: 'payout_' + vendor.replace(/\s+/g,'_') + '_' + dateFrom + '_to_' + dateTo + '.pdf',
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'letter', orientation: 'landscape' }
+  }).from(el.firstChild).save().then(function() {
+    document.body.removeChild(el);
+  });
 }
 
 /* ── UTILITIES ──────────────────────────────────────── */
