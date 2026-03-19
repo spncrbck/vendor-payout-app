@@ -202,6 +202,7 @@
     .badge-cash   { background: var(--green-light); color: var(--green-dark); }
     .badge-card   { background: #f0f0f5;            color: #444; }
     .badge-online { background: var(--blue-light);  color: var(--blue); }
+    .badge-check  { background: var(--amber-light); color: var(--amber); }
 
     /* ── DATE PRESETS ───────────────────────────────────── */
     .date-presets { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.65rem; }
@@ -406,6 +407,7 @@ function renderReport(data) {
       var paymentBadge = o.paymentTag === "cash"   ? '<span class="badge badge-cash">Cash</span>'
                        : o.paymentTag === "card"   ? '<span class="badge badge-card">Card</span>'
                        : o.paymentTag === "online" ? '<span class="badge badge-online">Online</span>'
+                       : o.paymentTag === "check"  ? '<span class="badge badge-check">Check</span>'
                        : '—';
       orderRows +=
         '<tr>' +
@@ -500,7 +502,8 @@ function processOrder(order) {
   var tags          = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
   var isCashOrder   = tags.indexOf("cash") !== -1;
   var isOnlineOrder = tags.indexOf("online") !== -1;
-  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : (isOnlineOrder ? "online" : ""));
+  var isCheckOrder  = tags.indexOf("check") !== -1;
+  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : (isOnlineOrder ? "online" : (isCheckOrder ? "check" : "")));
   var effectiveRate = isCashOrder ? 0 : FEE_RATE;
   var effectiveFlat = isCashOrder ? 0 : FEE_FLAT;
   var isMixed       = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; }).length > 1 ||
