@@ -429,8 +429,8 @@ function renderReport(data) {
         '<div class="vendor-header">' +
           '<div><div class="vendor-name">' + v.vendor + '</div><div class="vendor-meta">' + metaStr + '</div></div>' +
           '<div class="vendor-actions">' +
-            '<button class="btn-secondary btn-sm" onclick="downloadCSV(' + JSON.stringify(v.vendor) + ')">↓ CSV</button>' +
-            '<button class="btn-secondary btn-sm" onclick="downloadPDF(' + JSON.stringify(v.vendor) + ')">↓ PDF</button>' +
+            '<button class="btn-secondary btn-sm btn-csv" data-vendor="' + v.vendor.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">↓ CSV</button>' +
+            '<button class="btn-secondary btn-sm btn-pdf" data-vendor="' + v.vendor.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">↓ PDF</button>' +
           '</div>' +
         '</div>' +
         '<div class="vendor-body">' +
@@ -457,6 +457,13 @@ function renderReport(data) {
   });
 
   document.getElementById("vendorCards").innerHTML = cardsHtml;
+
+  document.querySelectorAll(".btn-csv").forEach(function(btn) {
+    btn.addEventListener("click", function() { downloadCSV(this.dataset.vendor); });
+  });
+  document.querySelectorAll(".btn-pdf").forEach(function(btn) {
+    btn.addEventListener("click", function() { downloadPDF(this.dataset.vendor); });
+  });
 }
 
 /* ── ORDER PROCESSING ───────────────────────────────── */
@@ -562,12 +569,14 @@ function downloadCSV(vendor) {
       d.totalFeeShare, d.discountShare, d.returnShare, d.commission, d.netPayout]);
   });
   var csv = rows.map(function(r) { return r.join(","); }).join("\n");
-  var a = document.createElement("a");
-  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
   var dateFrom = document.getElementById("dateFrom").value;
   var dateTo   = document.getElementById("dateTo").value;
+  var a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
   a.download = "payout_" + vendor.replace(/\s+/g,"_") + "_" + dateFrom + "_to_" + dateTo + ".csv";
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
 
 /* ── DATE PRESETS ───────────────────────────────────── */
