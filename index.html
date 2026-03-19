@@ -294,6 +294,9 @@ var ALPENGLOW_VENDOR = "Alpenglow";
 // Loaded from Shopify: { "Vendor Name": { alpenglowKeeps: 30, passAlongTax: true } }
 var shopifyVendors = {};
 
+// Stored after each report generation — used by CSV/PDF export buttons
+var lastProcessed = [];
+
 window.addEventListener("DOMContentLoaded", function() {
   initDateRange();
   loadVendors();
@@ -365,6 +368,7 @@ function generateReport() {
 function renderReport(data) {
   var filterVendor = document.getElementById("vendorFilter").value;
   var processed    = (data.orders || []).map(processOrder);
+  lastProcessed    = processed;
   var summaries    = buildSummaries(processed);
   var allVendors   = Object.values(summaries);
   var activeVendors = filterVendor === "all"
@@ -425,8 +429,8 @@ function renderReport(data) {
         '<div class="vendor-header">' +
           '<div><div class="vendor-name">' + v.vendor + '</div><div class="vendor-meta">' + metaStr + '</div></div>' +
           '<div class="vendor-actions">' +
-            '<button class="btn-secondary btn-sm" onclick="downloadCSV(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ CSV</button>' +
-            '<button class="btn-secondary btn-sm" onclick="downloadPDF(\'' + v.vendor + '\',' + JSON.stringify(processed) + ')">↓ PDF</button>' +
+            '<button class="btn-secondary btn-sm" onclick="downloadCSV(' + JSON.stringify(v.vendor) + ')">↓ CSV</button>' +
+            '<button class="btn-secondary btn-sm" onclick="downloadPDF(' + JSON.stringify(v.vendor) + ')">↓ PDF</button>' +
           '</div>' +
         '</div>' +
         '<div class="vendor-body">' +
@@ -548,7 +552,8 @@ function buildSummaries(processed) {
 }
 
 /* ── CSV EXPORT ─────────────────────────────────────── */
-function downloadCSV(vendor, processed) {
+function downloadCSV(vendor) {
+  var processed = lastProcessed;
   var rows = [["Order","Date","Payment","Subtotal","Tax","Fee","Discount","Return","Commission","Net Payout"]];
   processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
     var d = o.vendorData[vendor];
@@ -596,7 +601,8 @@ function clearActivePreset() {
 }
 
 /* ── PDF EXPORT ─────────────────────────────────────── */
-function downloadPDF(vendor, processed) {
+function downloadPDF(vendor) {
+  var processed = lastProcessed;
   var dateFrom = document.getElementById("dateFrom").value;
   var dateTo   = document.getElementById("dateTo").value;
 
