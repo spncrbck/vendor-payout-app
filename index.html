@@ -680,6 +680,26 @@ function downloadPDF(vendor) {
   var today = new Date();
   var todayStr = (today.getMonth()+1) + '/' + today.getDate() + '/' + String(today.getFullYear()).slice(2);
 
+  // Per-order breakdown rows for PDF
+  var orderTableRows = "";
+  processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
+    var d = o.vendorData[vendor];
+    var payLabel = o.paymentTag ? (o.paymentTag.charAt(0).toUpperCase() + o.paymentTag.slice(1)) : "—";
+    orderTableRows +=
+      "<tr>" +
+      "<td>" + o.orderId + "</td>" +
+      "<td>" + o.date + "</td>" +
+      "<td>" + payLabel + "</td>" +
+      "<td class='r'>" + fmt(d.sub) + "</td>" +
+      "<td class='r'>" + (d.taxIncluded ? fmt(d.taxShare) : "—") + "</td>" +
+      "<td class='r'>" + (d.totalFeeShare > 0 ? "−" + fmt(d.totalFeeShare) : "—") + "</td>" +
+      "<td class='r'>" + (d.discountShare > 0 ? "−" + fmt(d.discountShare) : "—") + "</td>" +
+      "<td class='r'>" + (d.returnShare   > 0 ? "−" + fmt(d.returnShare)   : "—") + "</td>" +
+      "<td class='r'>" + (d.commission    > 0 ? "−" + fmt(d.commission)    : "—") + "</td>" +
+      "<td class='r'><strong>" + fmt(d.netPayout) + "</strong></td>" +
+      "</tr>";
+  });
+
   // Payout calculation rows
   var calcRows =
     '<tr><td>Net Retail Sales</td><td class="r">' + fmt(netRetail) + '</td></tr>' +
@@ -707,6 +727,8 @@ function downloadPDF(vendor) {
     'table.data th:last-child{text-align:right}' +
     'table.data td{padding:4px 6px;font-size:11px;border-bottom:1px solid #ddd}' +
     'table.data td:last-child{text-align:right;font-variant-numeric:tabular-nums}' +
+    'table.orders-table th,table.orders-table td{font-size:9.5px;padding:3px 4px}' +
+    '.r{text-align:right;font-variant-numeric:tabular-nums}' +
     'table.data tr:last-child td{border-bottom:none}' +
     '.total-row td{font-weight:700;border-top:1.5px solid #000;padding-top:6px}' +
     '.notes{font-size:10.5px;line-height:1.6;margin:20px 0;color:#222}' +
@@ -754,6 +776,13 @@ function downloadPDF(vendor) {
         '</tbody></table>' +
       '</div>' +
     '</div>' +
+
+    '<div class="section-title" style="margin-top:20px">Order Detail</div>' +
+    '<table class="data orders-table"><thead><tr>' +
+      '<th>Order</th><th>Date</th><th>Payment</th>' +
+      '<th class="r">Subtotal</th><th class="r">Tax</th><th class="r">Fee</th>' +
+      '<th class="r">Discount</th><th class="r">Return</th><th class="r">Commission</th><th class="r">Net</th>' +
+    '</tr></thead><tbody>' + orderTableRows + '</tbody></table>' +
 
     '<p class="notes">Payout reflects gross retail sales less applicable discounts, returns, and payment processing fees. ' +
     'Sales tax collected on transactions is passed through to the vendor and included in the payout amount. ' +
