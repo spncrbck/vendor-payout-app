@@ -505,12 +505,14 @@ function processOrder(order) {
     lineItemVendor[item.id] = v;
   });
 
-  // Tally refunds per vendor
-  var returnsByVendor = {};
+  // Tally refunds per vendor (subtotal + tax tracked separately)
+  var returnsByVendor    = {};
+  var returnTaxByVendor  = {};
   (order.refunds || []).forEach(function(refund) {
     (refund.refund_line_items || []).forEach(function(rli) {
       var v = lineItemVendor[rli.line_item_id] || "Unknown";
-      returnsByVendor[v] = (returnsByVendor[v] || 0) + parseFloat(rli.subtotal || 0);
+      returnsByVendor[v]   = (returnsByVendor[v]   || 0) + parseFloat(rli.subtotal   || 0);
+      returnTaxByVendor[v] = (returnTaxByVendor[v] || 0) + parseFloat(rli.total_tax  || 0);
     });
   });
 
@@ -536,13 +538,16 @@ function processOrder(order) {
     var discountShare = r2(totalDiscount * share);
     var returnShare  = r2(returnsByVendor[v] || 0);
 
-    var setting      = getVendorSetting(v);
-    var passAlongTax = setting.passAlongTax;
-    var taxForNet    = passAlongTax ? taxShare : 0;
+    var setting       = getVendorSetting(v);
+    var passAlongTax  = setting.passAlongTax;
+    var taxForNet     = passAlongTax ? taxShare : 0;
+    var returnTaxShare = r2(returnTaxByVendor[v] || 0);
+    // If tax is passed along to vendor, the refunded tax must also come back out
+    var returnTotal   = r2(returnShare + (passAlongTax ? returnTaxShare : 0));
 
     var flat         = isMixed ? effectiveFlat / all.length : effectiveFlat;
     var fee          = r2(flat + effectiveRate * (s - discountShare + taxShare));
-    var grossForSplit = r2(s + taxForNet - discountShare - fee - returnShare);
+    var grossForSplit = r2(s + taxForNet - discountShare - fee - returnTotal);
     var commission   = r2(grossForSplit * setting.commissionRate / 100);
     var netPayout    = r2(grossForSplit - commission);
 
@@ -551,7 +556,7 @@ function processOrder(order) {
       taxShare: taxShare,
       taxIncluded: passAlongTax,
       discountShare: discountShare,
-      returnShare: returnShare,
+      returnShare: returnTotal,
       totalFeeShare: fee,
       commission: commission,
       netPayout: netPayout
