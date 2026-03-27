@@ -219,6 +219,9 @@
     .btn-preset:hover { background: var(--green-light); border-color: #9ddfd0; color: var(--green-dark); }
     .btn-preset.active { background: var(--green-light); border-color: #9ddfd0; color: var(--green-dark); }
 
+    /* ── SECTION LABEL ─────────────────────────────────── */
+    .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); margin: 1rem 0 0.5rem; }
+
     /* ── NOTES ─────────────────────────────────────────── */
     .notes-area { margin-top: 1rem; }
     .notes-label { font-size: 11.5px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 0.4rem; display: block; }
@@ -468,6 +471,19 @@ function renderReport(data) {
             '<div class="payout-cell highlight"><div class="pl">Net payout</div><div class="pv green">' + fmt(v.netPayout) + '</div></div>' +
           '</div>' +
           '<hr class="divider">' +
+          (function() {
+            var productRows = "";
+            var products = v.products || {};
+            Object.entries(products).sort(function(a,b) { return b[1].revenue - a[1].revenue; }).forEach(function(pe) {
+              productRows += '<tr><td>' + pe[0].replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</td><td class="num">' + pe[1].qty + '</td><td class="num">' + fmt(pe[1].revenue) + '</td></tr>';
+            });
+            return '<div class="section-label">Sales by Product</div>' +
+              '<div class="table-wrap"><table>' +
+              '<thead><tr><th>Product</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead>' +
+              '<tbody>' + productRows + '</tbody>' +
+              '</table></div>' +
+              '<hr class="divider">';
+          })() +
           '<div class="table-wrap"><table>' +
             '<thead><tr>' +
               '<th>Order</th><th>Date</th><th>Payment</th>' +
@@ -499,10 +515,19 @@ function processOrder(order) {
   var lines = order.line_items || [];
   var vs = {};
   var lineItemVendor = {};
+  var productsByVendor = {};
   lines.forEach(function(item) {
     var v = item.vendor || "Unknown";
-    vs[v] = (vs[v] || 0) + parseFloat(item.price) * item.quantity;
+    var lineTotal = parseFloat(item.price) * item.quantity;
+    vs[v] = (vs[v] || 0) + lineTotal;
     lineItemVendor[item.id] = v;
+    // Track product breakdown
+    var title = (item.title || "Unknown Product");
+    if (item.variant_title && item.variant_title !== "Default Title") title += " — " + item.variant_title;
+    if (!productsByVendor[v]) productsByVendor[v] = {};
+    if (!productsByVendor[v][title]) productsByVendor[v][title] = { qty: 0, revenue: 0 };
+    productsByVendor[v][title].qty     += item.quantity;
+    productsByVendor[v][title].revenue  = r2(productsByVendor[v][title].revenue + lineTotal);
   });
 
   // Tally refunds per vendor (subtotal + tax tracked separately)
@@ -559,7 +584,8 @@ function processOrder(order) {
       returnShare: returnTotal,
       totalFeeShare: fee,
       commission: commission,
-      netPayout: netPayout
+      netPayout: netPayout,
+      products: productsByVendor[v] || {}
     };
   });
 
@@ -579,8 +605,14 @@ function buildSummaries(processed) {
     Object.entries(order.vendorData).forEach(function(entry) {
       var v = entry[0]; var d = entry[1];
       if (v === ALPENGLOW_VENDOR) return;
-      if (!s[v]) s[v] = { vendor:v, grossSales:0, taxCollected:0, totalDiscounts:0, totalReturns:0, processingFees:0, alpenglowCommission:0, netPayout:0, orderCount:0 };
+      if (!s[v]) s[v] = { vendor:v, grossSales:0, taxCollected:0, totalDiscounts:0, totalReturns:0, processingFees:0, alpenglowCommission:0, netPayout:0, orderCount:0, products:{} };
       s[v].grossSales          = r2(s[v].grossSales          + d.sub);
+      Object.entries(d.products || {}).forEach(function(pe) {
+        var pt = pe[0]; var pd = pe[1];
+        if (!s[v].products[pt]) s[v].products[pt] = { qty: 0, revenue: 0 };
+        s[v].products[pt].qty     += pd.qty;
+        s[v].products[pt].revenue  = r2(s[v].products[pt].revenue + pd.revenue);
+      });
       s[v].taxCollected        = r2(s[v].taxCollected        + (d.taxIncluded ? d.taxShare : 0));
       s[v].totalDiscounts      = r2(s[v].totalDiscounts      + d.discountShare);
       s[v].totalReturns        = r2(s[v].totalReturns        + d.returnShare);
