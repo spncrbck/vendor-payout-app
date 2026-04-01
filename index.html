@@ -725,9 +725,10 @@ function downloadPDF(vendor) {
   processed.filter(function(o) { return o.vendorData[vendor]; }).forEach(function(o) {
     Object.entries(o.vendorData[vendor].products || {}).forEach(function(pe) {
       var title = pe[0]; var pd = pe[1];
-      if (!productMap[title]) productMap[title] = { qty: 0, revenue: 0 };
-      productMap[title].qty     += pd.qty;
-      productMap[title].revenue  = r2(productMap[title].revenue + pd.revenue);
+      if (!productMap[title]) productMap[title] = { qtySold: 0, qtyReturned: 0, revenue: 0 };
+      productMap[title].qtySold     += pd.qtySold;
+      productMap[title].qtyReturned += pd.qtyReturned;
+      productMap[title].revenue      = r2(productMap[title].revenue + pd.revenue);
     });
   });
   var productTableRows = "";
