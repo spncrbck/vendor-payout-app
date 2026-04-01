@@ -727,7 +727,7 @@ function downloadPDF(vendor) {
     productTableRows +=
       "<tr>" +
       "<td>" + pe[0].replace(/&/g,'&amp;').replace(/</g,'&lt;') + "</td>" +
-      "<td class='r'>" + pe[1].qty + "</td>" +
+      "<td class='c'>" + pe[1].qty + "</td>" +
       "<td class='r'>" + fmt(pe[1].revenue) + "</td>" +
       "</tr>";
   });
@@ -781,6 +781,7 @@ function downloadPDF(vendor) {
     'table.data td:last-child{text-align:right;font-variant-numeric:tabular-nums}' +
     'table.orders-table th,table.orders-table td{font-size:9.5px;padding:3px 4px}' +
     '.r{text-align:right;font-variant-numeric:tabular-nums}' +
+    '.c{text-align:center}' +
     'table.data tr:last-child td{border-bottom:none}' +
     '.total-row td{font-weight:700;border-top:1.5px solid #000;padding-top:6px}' +
     '.notes{font-size:10.5px;line-height:1.6;margin:20px 0;color:#222}' +
@@ -831,7 +832,7 @@ function downloadPDF(vendor) {
 
     '<div class="section-title" style="margin-top:20px">Sales by Product</div>' +
     '<table class="data"><thead><tr>' +
-      '<th>Product</th><th class="r">Units</th><th class="r">Revenue</th>' +
+      '<th>Product</th><th class="c">Units</th><th class="r">Revenue</th>' +
     '</tr></thead><tbody>' + productTableRows + '</tbody></table>' +
 
     '<div class="section-title" style="margin-top:20px">Order Detail</div>' +
