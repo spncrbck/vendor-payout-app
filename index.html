@@ -514,6 +514,7 @@ function renderReport(data) {
 function processOrder(order) {
   var lines = order.line_items || [];
   var vs = {};
+  var discountsByVendor = {};
   var lineItemVendor = {};
   var lineItemTitle  = {};
   var productsByVendor = {};
@@ -521,6 +522,11 @@ function processOrder(order) {
     var v = item.vendor || "Unknown";
     var lineTotal = parseFloat(item.price) * item.quantity;
     vs[v] = (vs[v] || 0) + lineTotal;
+    // Attribute each line item's discount directly to its vendor
+    var itemDiscount = (item.discount_allocations || []).reduce(function(sum, da) {
+      return sum + parseFloat(da.amount || 0);
+    }, 0);
+    discountsByVendor[v] = r2((discountsByVendor[v] || 0) + itemDiscount);
     lineItemVendor[item.id] = v;
     // Track product breakdown
     var title = (item.title || "Unknown Product");
@@ -550,7 +556,6 @@ function processOrder(order) {
 
   var sub           = Object.values(vs).reduce(function(s,v) { return s+v; }, 0);
   var tax           = parseFloat(order.total_tax || 0);
-  var totalDiscount = parseFloat(order.total_discounts || 0);
   var all           = Object.keys(vs);
   var tags          = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
   var isCashOrder   = tags.indexOf("cash") !== -1;
@@ -567,7 +572,7 @@ function processOrder(order) {
     var s            = vs[v];
     var share        = sub > 0 ? s / sub : 0;
     var taxShare     = r2(tax * share);
-    var discountShare = r2(totalDiscount * share);
+    var discountShare = r2(discountsByVendor[v] || 0);
     var returnShare  = r2(returnsByVendor[v] || 0);
 
     var setting       = getVendorSetting(v);
