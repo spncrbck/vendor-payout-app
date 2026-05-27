@@ -310,6 +310,8 @@ var FEE_FLAT         = 0.00;
 var FEE_RATE         = 0.027;
 var ONLINE_FEE_FLAT  = 0.30;
 var ONLINE_FEE_RATE  = 0.029;
+var VENMO_FEE_FLAT   = 0.10;
+var VENMO_FEE_RATE   = 0.019;
 var ALPENGLOW_VENDOR = "Alpenglow";
 
 // Loaded from Shopify: { "Vendor Name": { alpenglowKeeps: 30, passAlongTax: true } }
@@ -562,9 +564,10 @@ function processOrder(order) {
   var isCashOrder   = tags.indexOf("cash") !== -1;
   var isOnlineOrder = tags.indexOf("online") !== -1;
   var isCheckOrder  = tags.indexOf("check") !== -1;
-  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : (isOnlineOrder ? "online" : (isCheckOrder ? "check" : "")));
-  var effectiveRate = isCashOrder ? 0 : (isOnlineOrder ? ONLINE_FEE_RATE : FEE_RATE);
-  var effectiveFlat = isCashOrder ? 0 : (isOnlineOrder ? ONLINE_FEE_FLAT : FEE_FLAT);
+  var isVenmoOrder  = tags.indexOf("venmo") !== -1;
+  var paymentTag    = isCashOrder ? "cash" : (tags.indexOf("card") !== -1 ? "card" : (isOnlineOrder ? "online" : (isCheckOrder ? "check" : (isVenmoOrder ? "venmo" : ""))));
+  var effectiveRate = isCashOrder ? 0 : (isOnlineOrder ? ONLINE_FEE_RATE : (isVenmoOrder ? VENMO_FEE_RATE : FEE_RATE));
+  var effectiveFlat = isCashOrder ? 0 : (isOnlineOrder ? ONLINE_FEE_FLAT : (isVenmoOrder ? VENMO_FEE_FLAT : FEE_FLAT));
   var isMixed       = all.filter(function(v) { return v !== ALPENGLOW_VENDOR; }).length > 1 ||
                       (all.indexOf(ALPENGLOW_VENDOR) !== -1 && all.length > 1);
 
