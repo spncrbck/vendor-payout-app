@@ -289,6 +289,8 @@
       </div>
       <div class="date-presets">
         <span style="font-size:11px;font-weight:600;color:var(--text-faint);letter-spacing:.4px;text-transform:uppercase;align-self:center;margin-right:0.15rem;">Quick:</span>
+        <button class="btn-preset" id="preset-today"      onclick="setDateRange('today')">Today</button>
+        <button class="btn-preset" id="preset-wtd"        onclick="setDateRange('wtd')">Week to Date</button>
         <button class="btn-preset" id="preset-this-month" onclick="setDateRange('this-month')">This Month</button>
         <button class="btn-preset" id="preset-prev-month" onclick="setDateRange('prev-month')">Prev Month</button>
         <button class="btn-preset" id="preset-ytd"        onclick="setDateRange('ytd')">Year to Date</button>
@@ -671,6 +673,15 @@ function setDateRange(preset) {
   var y   = now.getFullYear();
   var from, to;
   switch (preset) {
+    case 'today':
+      from = isoDate(now);
+      to   = isoDate(now);
+      break;
+    case 'wtd':
+      var day = now.getDay(); // 0=Sun, 6=Sat
+      from = isoDate(new Date(y, now.getMonth(), now.getDate() - day));
+      to   = isoDate(now);
+      break;
     case 'this-month':
       from = isoDate(new Date(y, now.getMonth(), 1));
       to   = isoDate(now);
