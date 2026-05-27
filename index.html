@@ -203,6 +203,7 @@
     .badge-card   { background: #f0f0f5;            color: #444; }
     .badge-online { background: var(--blue-light);  color: var(--blue); }
     .badge-check  { background: var(--amber-light); color: var(--amber); }
+    .badge-venmo  { background: #e8f0ff;            color: #2962ff; }
 
     /* ── DATE PRESETS ───────────────────────────────────── */
     .date-presets { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-top: 0.65rem; }
@@ -428,6 +429,7 @@ function renderReport(data) {
                        : o.paymentTag === "card"   ? '<span class="badge badge-card">Card</span>'
                        : o.paymentTag === "online" ? '<span class="badge badge-online">Online</span>'
                        : o.paymentTag === "check"  ? '<span class="badge badge-check">Check</span>'
+                       : o.paymentTag === "venmo"  ? '<span class="badge badge-venmo">Venmo</span>'
                        : '—';
       orderRows +=
         '<tr>' +
