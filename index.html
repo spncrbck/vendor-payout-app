@@ -388,7 +388,7 @@ function generateReport() {
 
 function renderReport(data) {
   var filterVendor = document.getElementById("vendorFilter").value;
-  var processed    = (data.orders || []).map(processOrder);
+  var processed    = (data.orders || []).map(processOrder).filter(Boolean);
   lastProcessed    = processed;
   var summaries    = buildSummaries(processed);
   var allVendors   = Object.values(summaries);
@@ -512,6 +512,8 @@ function renderReport(data) {
 
 /* ── ORDER PROCESSING ───────────────────────────────── */
 function processOrder(order) {
+  var tags = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
+  if (tags.indexOf("vendor-exclude") !== -1) return null;
   var lines = order.line_items || [];
   var vs = {};
   var discountsByVendor = {};
@@ -557,7 +559,6 @@ function processOrder(order) {
   var sub           = Object.values(vs).reduce(function(s,v) { return s+v; }, 0);
   var tax           = parseFloat(order.total_tax || 0);
   var all           = Object.keys(vs);
-  var tags          = (order.tags || "").split(",").map(function(t) { return t.trim().toLowerCase(); });
   var isCashOrder   = tags.indexOf("cash") !== -1;
   var isOnlineOrder = tags.indexOf("online") !== -1;
   var isCheckOrder  = tags.indexOf("check") !== -1;
